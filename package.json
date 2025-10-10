@@ -4,22 +4,16 @@
   "scripts": {
     "ng": "ng",
     "build": "npm-run-all -s clean:build build:prod",
-    "start": "npm-run-all -s clean:build build:dev watch:demo",
-    "watch": "npm-run-all -s clean:build -p watch:lib watch:demo",
+    "watch": "npm-run-all -s clean:build -p watch:lib",
     "build:prod": "ng build @talentia/fullcalendar --configuration production",
     "build:dev": "ng build @talentia/fullcalendar --configuration development",
     "watch:lib": "ng build @talentia/fullcalendar --configuration development --watch",
-    "watch:demo": "wait-on dist/fullcalendar/package.json && ng serve demo",
-    "demo:dev": "ng build demo --configuration development",
-    "demo:prod": "ng build demo --configuration production",
     "clean:build": "rimraf dist .angular",
     "clean:modules": "rimraf node_modules",
     "clean:all": "npm-run-all -p clean:build clean:modules",
     "lint": "ng lint",
     "lint:lib": "ng lint @talentia/fullcalendar",
-    "lint:app": "ng lint demo",
-    "lint:lib-fix": "ng lint @talentia/fullcalendar --fix",
-    "lint:app-fix": "ng lint demo --fix"
+    "lint:lib-fix": "ng lint @talentia/fullcalendar --fix"
   },
   "dependencies": {
     "@angular/animations": "18.2.14",
