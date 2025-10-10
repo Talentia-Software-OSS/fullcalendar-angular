@@ -1,5 +1,4 @@
 import deepEqual from 'fast-deep-equal';
-import { deepCopy } from './utils';
 import {
   Component,
   ElementRef,
@@ -14,30 +13,8 @@ import {
   OnDestroy
 } from '@angular/core';
 import { Calendar, BusinessHoursInput, ConstraintInput, EventApi, PluginDef } from '@fullcalendar/core';
-
-// import {
-//   ToolbarInput,
-//   CustomButtonInput,
-//   ButtonIconsInput, CellInfo,
-//   ButtonTextCompoundInput,
-//   ViewOptionsInput
-// } from '@fullcalendar/core/types/input-types';
-// import { DateInput } from '@fullcalendar/core/datelib/env';
-// import { DurationInput } from '@fullcalendar/core/datelib/duration';
-// import { FormatterInput } from '@fullcalendar/core/datelib/formatting';
-// import { DateRangeInput } from '@fullcalendar/core/datelib/date-range';
-// import { RawLocale, LocaleSingularArg } from '@fullcalendar/core/datelib/locale';
-// import { OverlapFunc, AllowFunc } from '@fullcalendar/core/validation';
-// import {
-//   EventSourceInput,
-//   EventInputTransformer,
-//   EventSourceErrorResponseHandler,
-//   EventSourceSuccessResponseHandler
-// } from '@fullcalendar/core/structs/event-source';
-
-// need type any, because ngcc wrong build in AOT,
-// https://github.com/angular/angular/issues/34027
-// https://github.com/fullcalendar/fullcalendar-angular/pull/275
+import { INPUT_NAMES, INPUT_IS_DEEP, OUTPUT_NAMES } from './fullcalendar-options';
+import { deepCopy } from './utils';
 
 type DateInput = any;
 type DurationInput = any;
@@ -58,9 +35,8 @@ type EventInputTransformer = any;
 type EventSourceErrorResponseHandler = any;
 type EventSourceSuccessResponseHandler = any;
 
-import { INPUT_NAMES, INPUT_IS_DEEP, OUTPUT_NAMES } from './fullcalendar-options';
-
 @Component({
+  standalone: false,
   selector: 'full-calendar',
   template: ''
 })
@@ -116,7 +92,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
       const { deepCopies } = this;
 
       for (const inputName in INPUT_IS_DEEP) {
-        if (INPUT_IS_DEEP.hasOwnProperty(inputName)) {
+        if (Object.prototype.hasOwnProperty.call(INPUT_IS_DEEP, inputName)) {
           const inputVal = this[inputName];
 
           if (inputVal !== undefined) { // unfortunately FC chokes when some props are set to undefined
@@ -138,7 +114,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
     if (this.calendar) { // not the initial render
 
       for (const inputName in changes) {
-        if (changes.hasOwnProperty(inputName)) {
+        if (Object.prototype.hasOwnProperty.call(changes, inputName)) {
           if (this.deepCopies[inputName] === undefined) { // not already handled in ngDoCheck
             this.dirtyProps[inputName] = changes[inputName].currentValue;
           }
@@ -176,7 +152,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
 
   @Input() header?: boolean | ToolbarInput;
   @Input() footer?: boolean | ToolbarInput;
-  @Input() customButtons?: { [name: string]: CustomButtonInput };
+  @Input() customButtons?: Record<string, CustomButtonInput>;
   @Input() buttonIcons?: boolean | ButtonIconsInput;
   @Input() themeSystem?: 'standard' | string;
   @Input() bootstrapFontAwesome?: boolean | ButtonIconsInput;
@@ -266,7 +242,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
   @Input() endParam?: string;
   @Input() lazyFetching?: boolean;
   @Input() nextDayThreshold?: DurationInput;
-  @Input() eventOrder?: string | Array<((a: EventApi, b: EventApi) => number) | (string | ((a: EventApi, b: EventApi) => number))>;
+  @Input() eventOrder?: string | ((a: EventApi, b: EventApi) => number) | (string | ((a: EventApi, b: EventApi) => number))[];
   @Input() rerenderDelay?: number | null;
   @Input() dragRevertDuration?: number;
   @Input() dragScroll?: boolean;
@@ -275,8 +251,8 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
   @Input() droppable?: boolean;
   @Input() dropAccept?: string | ((draggable: any) => boolean);
   @Input() eventDataTransform?: EventInputTransformer;
-  @Input() allDayMaintainDuration?: Boolean;
-  @Input() eventResizableFromStart?: Boolean;
+  @Input() allDayMaintainDuration?: boolean;
+  @Input() eventResizableFromStart?: boolean;
   @Input() timeGridEventMinHeight?: number;
   @Input() allDayHtml?: string;
   @Input() eventDragMinDistance?: number;
@@ -289,7 +265,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
   @Input() titleRangeSeparator?: string;
   // compound OptionsInput...
   @Input() buttonText?: ButtonTextCompoundInput;
-  @Input() views?: { [viewId: string]: ViewOptionsInput };
+  @Input() views?: Record<string, ViewOptionsInput>;
   @Input() plugins?: (PluginDef | string)[];
   // scheduler...
   @Input() schedulerLicenseKey?: string;
