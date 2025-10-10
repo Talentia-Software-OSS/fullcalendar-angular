@@ -3,159 +3,38 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "fullcalendar-demo": {
-      "root": "",
-      "sourceRoot": "src",
-      "projectType": "application",
-      "prefix": "app",
-      "schematics": {
-        "@schematics/angular:component": {
-          "style": "scss"
-        }
-      },
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:browser",
-          "options": {
-            "outputPath": "dist/fullcalendar-demo",
-            "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.app.json",
-            "preserveSymlinks": true,
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
-            ],
-            "styles": [
-              "src/styles.scss",
-              "node_modules/@fullcalendar/core/main.css",
-              "node_modules/@fullcalendar/daygrid/main.css"
-            ],
-            "scripts": [],
-            "vendorChunk": true,
-            "extractLicenses": false,
-            "buildOptimizer": false,
-            "sourceMap": true,
-            "optimization": false,
-            "namedChunks": true
-          },
-          "configurations": {
-            "production": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ],
-              "optimization": true,
-              "outputHashing": "all",
-              "sourceMap": false,
-              "namedChunks": false,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "6kb"
-                }
-              ]
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
-            "buildTarget": "fullcalendar-demo:build"
-          },
-          "configurations": {
-            "production": {
-              "buildTarget": "fullcalendar-demo:build:production"
-            }
-          }
-        },
-        "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
-          "options": {
-            "buildTarget": "fullcalendar-demo:build"
-          }
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.spec.json",
-            "karmaConfig": "src/karma.conf.js",
-            "styles": [
-              "src/styles.scss"
-            ],
-            "scripts": [],
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
-            ]
-          }
-        }
-      }
-    },
-    "fullcalendar-demo-e2e": {
-      "root": "e2e/",
-      "projectType": "application",
-      "prefix": "",
-      "architect": {
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "fullcalendar-demo:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "fullcalendar-demo:serve:production"
-            }
-          }
-        }
-      }
-    },
     "@talentia/fullcalendar": {
+      "projectType": "library",
       "root": "projects/fullcalendar",
       "sourceRoot": "projects/fullcalendar/src",
-      "projectType": "library",
-      "prefix": "ng",
+      "prefix": "lib",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "tsConfig": "projects/fullcalendar/tsconfig.lib.json",
             "project": "projects/fullcalendar/ng-package.json"
-          },          
+          },
           "configurations": {
             "production": {
               "tsConfig": "projects/fullcalendar/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/fullcalendar/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
         },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "main": "projects/fullcalendar/src/test.ts",
-            "tsConfig": "projects/fullcalendar/tsconfig.spec.json",
-            "karmaConfig": "projects/fullcalendar/karma.conf.js"
+            "lintFilePatterns": [
+              "projects/fullcalendar/**/*.ts",
+              "projects/fullcalendar/**/*.html"
+            ],
+            "eslintConfig": "projects/fullcalendar/eslint.config.js"
           }
         }
       }
     }
-  },
-  "cli": {
-    "analytics": false
   }
 }
