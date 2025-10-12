@@ -92,7 +92,8 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
       const { deepCopies } = this;
 
       for (const inputName in INPUT_IS_DEEP) {
-        if (Object.prototype.hasOwnProperty.call(INPUT_IS_DEEP, inputName)) {
+        // eslint-disable-next-line no-prototype-builtins
+        if (INPUT_IS_DEEP.hasOwnProperty(inputName)) {
           const inputVal = this[inputName];
 
           if (inputVal !== undefined) { // unfortunately FC chokes when some props are set to undefined
@@ -114,7 +115,8 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
     if (this.calendar) { // not the initial render
 
       for (const inputName in changes) {
-        if (Object.prototype.hasOwnProperty.call(changes, inputName)) {
+        // eslint-disable-next-line no-prototype-builtins
+        if (changes.hasOwnProperty(inputName)) {
           if (this.deepCopies[inputName] === undefined) { // not already handled in ngDoCheck
             this.dirtyProps[inputName] = changes[inputName].currentValue;
           }
@@ -152,7 +154,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
 
   @Input() header?: boolean | ToolbarInput;
   @Input() footer?: boolean | ToolbarInput;
-  @Input() customButtons?: Record<string, CustomButtonInput>;
+  @Input() customButtons?: { [name: string]: CustomButtonInput };
   @Input() buttonIcons?: boolean | ButtonIconsInput;
   @Input() themeSystem?: 'standard' | string;
   @Input() bootstrapFontAwesome?: boolean | ButtonIconsInput;
@@ -265,7 +267,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
   @Input() titleRangeSeparator?: string;
   // compound OptionsInput...
   @Input() buttonText?: ButtonTextCompoundInput;
-  @Input() views?: Record<string, ViewOptionsInput>;
+  @Input() views?: { [viewId: string]: ViewOptionsInput };
   @Input() plugins?: (PluginDef | string)[];
   // scheduler...
   @Input() schedulerLicenseKey?: string;

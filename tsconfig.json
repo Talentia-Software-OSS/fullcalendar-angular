@@ -25,7 +25,6 @@
     "target": "ES2022",
     "module": "ES2022",
     "forceConsistentCasingInFileNames": true,
-    "noImplicitThis": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
     "strictPropertyInitialization": false,
