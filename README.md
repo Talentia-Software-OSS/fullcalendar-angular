@@ -5,7 +5,7 @@ A FullCalendar component for Angular.
 
 ## Supported Angular Versions
 
-`@talentia/fullcalendar` version `4.4.10` supports Angular 18.
+`@talentia/fullcalendar` version `4.4.11` supports Angular 18.
 
 # FullCalendar Angular Component [![Build Status](https://travis-ci.com/fullcalendar/fullcalendar-angular.svg?branch=master)](https://travis-ci.com/fullcalendar/fullcalendar-angular)
 
