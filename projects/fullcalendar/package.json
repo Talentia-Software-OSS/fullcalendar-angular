@@ -1,13 +1,13 @@
 {
   "name": "@talentia/fullcalendar",
-  "version": "4.4.11",
+  "version": "4.4.12",
   "title": "FullCalendar Angular Component",
   "description": "A FullCalendar component for Angular",
   "license": "MIT",
   "licenseFilename": "LICENSE",
   "peerDependencies": {
-    "@angular/common": "^18.0.0",
-    "@angular/core": "^18.0.0",
+    "@angular/common": "^19.0.0",
+    "@angular/core": "^19.0.0",
     "@fullcalendar/core": "~4.4.2",
     "fast-deep-equal": "~3.1.3"
   },

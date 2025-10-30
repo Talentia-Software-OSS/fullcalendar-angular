@@ -1,12 +1,16 @@
 # This workflow will run tests using node and then publish a package to npm when a release is created
 # For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
 
-name: Node.js Publish
+name: Node.js Publish with OIDC
 
 on:
   workflow_dispatch:
   # release:
   #   types: [created]
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
@@ -22,27 +26,29 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        node-version: [20.19.5]
+        node-version: [22.21.1]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     steps:
       - name: Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://registry.npmjs.org'
           cache: npm
 
+      # Ensure npm 11.5.1 or later is installed
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Run build library
+      - name: Run build only library
         run: npm run build:prod --if-present
     
       - name: Publish package
         run: npm publish ./dist/fullcalendar
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
