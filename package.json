@@ -1,6 +1,6 @@
 {
   "name": "fullcalendar",
-  "version": "4.4.12",
+  "version": "4.4.13",
   "scripts": {
     "ng": "ng",
     "build": "npm-run-all -s clean:build build:prod",
