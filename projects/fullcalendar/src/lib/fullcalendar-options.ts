@@ -115,7 +115,7 @@ export const INPUT_NAMES = [
   'forceEventDuration',
   'progressiveEventRendering',
   'selectLongPressDelay',
-  'selectMinDistance',
+  // 'selectMinDistance',
   'timeZoneParam',
   'titleRangeSeparator',
   // compound OptionsInput...
