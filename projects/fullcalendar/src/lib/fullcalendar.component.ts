@@ -3,6 +3,7 @@ import { Component, ElementRef, SimpleChanges, AfterViewInit, DoCheck, OnChanges
 import { Calendar, BusinessHoursInput, ConstraintInput, EventApi, PluginDef } from '@fullcalendar/core';
 import { INPUT_NAMES, INPUT_IS_DEEP, OUTPUT_NAMES } from './fullcalendar-options';
 import { deepCopy } from './utils';
+import { FullCalendarAccessibility } from './fullcalendar-accessibility';
 
 type DateInput = any;
 type DurationInput = any;
@@ -36,62 +37,19 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
   private calendar: Calendar;
   private dirtyProps: any = {};
   private deepCopies: any = {};
-  private a11yObserver?: MutationObserver;
-  private a11yPatchScheduled = false;
+  private a11y: FullCalendarAccessibility;
   private initialRenderInProgress = true;
 
   ngAfterViewInit() {
+    this.a11y = new FullCalendarAccessibility(this.element.nativeElement, {
+      isSelectable: () => !!this.selectable,
+      dateClick: this.dateClick,
+      eventClick: this.eventClick
+    });
     this.calendar = new Calendar(this.element.nativeElement, this.buildOptions());
     this.calendar.render();
     this.initialRenderInProgress = false;
-    this.patchAccessibility();
-
-    // Primary trigger: datesRender/viewSkeletonRender (wired in buildOptions) fire whenever
-    // FullCalendar (re)builds the header/body table skeleton, which is cheaper and more
-    // targeted than scanning on every DOM mutation.
-    //
-    // Fallback: a MutationObserver, in case some table rebuild path doesn't go through those
-    // hooks. Its callback only re-patches when an added node actually looks like calendar
-    // table markup, instead of unconditionally rescanning the whole tree on any mutation.
-    // Attribute writes done by patchAccessibility don't trigger childList mutations, so this
-    // cannot loop on itself.
-    this.a11yObserver = new MutationObserver((mutations) => {
-      const hasTableMarkup = mutations.some((mutation) =>
-        Array.from(mutation.addedNodes).some((node) =>
-          node instanceof Element && (node.matches('table, th') || !!node.querySelector('table, th'))
-        )
-      );
-      if (hasTableMarkup) this.scheduleAccessibilityPatch();
-    });
-    this.a11yObserver.observe(this.element.nativeElement, { childList: true, subtree: true });
-  }
-
-  private scheduleAccessibilityPatch() {
-    if (this.a11yPatchScheduled) return;
-    this.a11yPatchScheduled = true;
-    queueMicrotask(() => {
-      this.a11yPatchScheduled = false;
-      this.patchAccessibility();
-    });
-  }
-
-  /*
-  Fix: FullCalendar (v4 through at least v6) never declares its day-grid/timeline
-  <table> markup as data tables with associated headers, nor marks the purely positional ones as
-  presentational. Two independent tables are involved: the header row (<th>, e.g.
-  fc-day-header in dayGrid, unclassed in resource-timeline) and the per-week/day/resource body
-  grids (<table> with <td> cells only, no <th> at all). Neither carries scope/role, so this patches
-  both after every render. All observed <th> are column headers (no scope="row" case found across
-  dayGrid/timeGrid/resource-timeline views), hence the unqualified selector below.
-  */
-  private patchAccessibility() {
-    const root: HTMLElement = this.element.nativeElement;
-    root.querySelectorAll('th:not([scope])').forEach((th) => th.setAttribute('scope', 'col'));
-    root.querySelectorAll('table:not([role])').forEach((table) => {
-      if (!table.querySelector('th')) {
-        table.setAttribute('role', 'presentation');
-      }
-    });
+    this.a11y.attach(this.calendar);
   }
 
   private buildOptions() {
@@ -111,7 +69,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
       const emit = options[outputName];
       options[outputName] = (...args) => {
         if (!this.initialRenderInProgress) {
-          this.scheduleAccessibilityPatch();
+          this.a11y.schedulePatch();
         }
         emit(...args);
       };
@@ -187,8 +145,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
   }
 
   ngOnDestroy() {
-    this.a11yObserver?.disconnect();
-    this.a11yObserver = undefined;
+    this.a11y.destroy();
     if (this.calendar) {
       this.calendar.destroy();
     }
