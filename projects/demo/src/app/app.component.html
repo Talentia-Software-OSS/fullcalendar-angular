@@ -1,0 +1,70 @@
+<header class="header">
+  <h1 class="header title">{{ title }}</h1>
+  <div class="header description">
+    A FullCalendar v4 component for Angular, with keyboard accessibility.
+  </div>
+</header>
+
+<section class="toolbar">
+  <button type="button" (click)="addEvent()">Add event (in-place push)</button>
+  <button type="button" (click)="weekends = !weekends">{{ weekends ? 'Hide' : 'Show' }} weekends</button>
+  <button type="button" (click)="showCalendar = !showCalendar">{{ showCalendar ? 'Destroy' : 'Create' }} calendar</button>
+</section>
+
+<section class="layout">
+  <article class="calendar">
+    <h2>Selectable calendar</h2>
+    <p class="range">Current range (from <code>datesRender</code>): <strong>{{ currentRange }}</strong> — datesRender: {{ datesRenderCount }}</p>
+    @if (showCalendar) {
+      <full-calendar
+        defaultView="dayGridMonth"
+        [defaultDate]="defaultDate"
+        [plugins]="plugins"
+        [header]="header"
+        [selectable]="true"
+        [weekends]="weekends"
+        [deepChangeDetection]="true"
+        [events]="events"
+        (datesRender)="onDatesRender($event)"
+        (dateClick)="onDateClick($event)"
+        (select)="onSelect($event)"
+        (eventClick)="onEventClick($event)">
+      </full-calendar>
+    }
+  </article>
+
+  <aside class="side">
+    <h2>Event log</h2>
+    <button type="button" (click)="clearLog()">Clear</button>
+    <ul class="log">
+      @for (entry of log; track entry.id) {
+        <li>{{ entry.text }}</li>
+      } @empty {
+        <li class="empty">Click or use the keyboard on the calendar…</li>
+      }
+    </ul>
+
+    <h2>Keyboard</h2>
+    <ul class="keys">
+      <li><kbd>Tab</kbd> moves between day cells (and time columns in the week/day views)</li>
+      <li><kbd>Enter</kbd> / <kbd>Space</kbd> selects the focused day or time slot</li>
+      <li><kbd>ArrowDown</kbd> on a day cell reaches its first event, <kbd>ArrowLeft</kbd> / <kbd>ArrowRight</kbd> move between events, <kbd>ArrowUp</kbd> / <kbd>Esc</kbd> go back</li>
+      <li><kbd>Enter</kbd> on an event triggers <code>eventClick</code></li>
+      <li><kbd>ArrowUp</kbd> / <kbd>ArrowDown</kbd> on a time column move between time slots</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="layout">
+  <article class="calendar">
+    <h2>Read-only calendar (only <code>eventClick</code>)</h2>
+    <p>Only the day cells with events are tab stops (<code>role="group"</code>): use <kbd>ArrowDown</kbd> to reach their events.</p>
+    <full-calendar
+      defaultView="dayGridMonth"
+      [defaultDate]="defaultDate"
+      [plugins]="plugins"
+      [events]="events"
+      (eventClick)="onReadOnlyEventClick($event)">
+    </full-calendar>
+  </article>
+</section>

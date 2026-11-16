@@ -24,6 +24,20 @@ type EventInputTransformer = any;
 type EventSourceErrorResponseHandler = any;
 type EventSourceSuccessResponseHandler = any;
 
+// Notification-only callbacks: FullCalendar fires them synchronously while it (re)builds its views, and
+// consumers typically react by updating state bound in their own template (the visible range, flags
+// driving *ngIf, ...). When that (re)build is started by this component from an Angular lifecycle hook
+// (render() in ngAfterViewInit, mutateOptions() in ngAfterContentChecked, destroy() in ngOnDestroy) the
+// emit happens in the middle of change detection: the parent view has already been checked, so the new
+// value throws NG0100 (ExpressionChangedAfterItHasBeenCheckedError) in dev mode and stays stale on
+// screen until some later change detection in prod. Those emits are deferred to a microtask instead
+// (zone.js runs change detection again right after it), keeping their relative order.
+// Deliberately NOT in this list: render callbacks such as eventRender/dayRender/resourceRender, whose
+// handlers commonly mutate the element FullCalendar has just created (classes, children) before it
+// measures the layout — they must stay synchronous. User-driven renders (toolbar clicks, keyboard, API
+// calls from event handlers) happen outside change detection and are never deferred either.
+const NOTIFICATION_OUTPUTS = ['datesRender', 'datesDestroy', 'viewSkeletonRender', 'viewSkeletonDestroy', 'loading'];
+
 @Component({
   standalone: false,
   selector: 'full-calendar',
@@ -39,6 +53,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
   private deepCopies: any = {};
   private a11y: FullCalendarAccessibility;
   private initialRenderInProgress = true;
+  private insideLifecycleHook = false; // true only while render()/mutateOptions()/destroy() run from a lifecycle hook
 
   ngAfterViewInit() {
     this.a11y = new FullCalendarAccessibility(this.element.nativeElement, {
@@ -47,7 +62,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
       eventClick: this.eventClick
     });
     this.calendar = new Calendar(this.element.nativeElement, this.buildOptions());
-    this.calendar.render();
+    this.runFromLifecycleHook(() => this.calendar.render());
     this.initialRenderInProgress = false;
     this.a11y.attach(this.calendar);
   }
@@ -56,8 +71,13 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
     const options = {};
 
     OUTPUT_NAMES.forEach(outputName => {
+      const deferInsideHook = NOTIFICATION_OUTPUTS.includes(outputName); // see NOTIFICATION_OUTPUTS
       options[outputName] = (...args) => {
-        this[outputName].emit(...args);
+        if (deferInsideHook && this.insideLifecycleHook) {
+          Promise.resolve().then(() => this[outputName].emit(...args));
+        } else {
+          this[outputName].emit(...args);
+        }
       };
     });
 
@@ -140,7 +160,7 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
 
     if (Object.keys(dirtyProps).length > 0) {
       this.dirtyProps = {}; // clear first, in case the rerender causes new dirtiness
-      this.calendar.mutateOptions(dirtyProps, [], false, deepEqual);
+      this.runFromLifecycleHook(() => this.calendar.mutateOptions(dirtyProps, [], false, deepEqual));
     }
   }
 
@@ -149,9 +169,20 @@ export class FullCalendarComponent implements AfterViewInit, DoCheck, OnChanges,
       this.a11y.destroy();
     }
     if (this.calendar) {
-      this.calendar.destroy();
+      this.runFromLifecycleHook(() => this.calendar.destroy());
     }
     this.calendar = null;
+  }
+
+  // Marks FullCalendar work started from an Angular lifecycle hook, i.e. during change detection
+  // (see NOTIFICATION_OUTPUTS). try/finally so a throwing render can't leave the flag stuck on.
+  private runFromLifecycleHook(work: () => void) {
+    this.insideLifecycleHook = true;
+    try {
+      work();
+    } finally {
+      this.insideLifecycleHook = false;
+    }
   }
 
   public getApi(): Calendar {

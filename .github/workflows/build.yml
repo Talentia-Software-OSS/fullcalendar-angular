@@ -27,7 +27,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [24.15.0]
+        node-version: [24.22.1]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -45,3 +45,6 @@ jobs:
 
     - name: Run build library
       run: npm run build:prod --if-present
+
+    - name: Run build app
+      run: npm run demo:prod --if-present

@@ -5,17 +5,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 `@talentia/fullcalendar` is a **fork of the FullCalendar v4 Angular library**, pinned to
-`@fullcalendar/core` 4.4.2 and Angular 20. It is essentially only consumed by Talentia's own HCM
+`@fullcalendar/core` 4.4.2 and Angular 21. It is essentially only consumed by Talentia's own HCM
 application (the `tsb` and `tf-scheduler`/`tf-calendar` pages there) — treat that as the primary,
 de facto consumer when judging the impact/priority of a change, even though the package is
-published as a general-purpose library. There is only one Angular workspace project, the library
-itself (`projects/fullcalendar`) — there is no demo app in `src/` despite what `CONTRIBUTORS.md`
-says.
+published as a general-purpose library. The Angular workspace has two projects: the library
+(`projects/fullcalendar`) and a demo app (`projects/demo`, added in HCM-8031; `CONTRIBUTORS.md`
+still describes an older demo in `src/` that no longer exists).
 
 This fork exists for two reasons:
 
 1. **Keep the Angular wrapper current** — the official `fullcalendar-angular` package lags behind
-   on Angular version support, so this fork is upgraded independently (currently Angular 20) while
+   on Angular version support, so this fork is upgraded independently (currently Angular 21) while
    staying on the FullCalendar v4 core the HCM app depends on.
 2. **Add accessibility support** — keyboard navigation/activation is entirely absent from the
    official FullCalendar v4 Angular wrapper, and remains absent in later official versions too.
@@ -27,16 +27,20 @@ This fork exists for two reasons:
 ```bash
 npm run build          # clean:build + build:prod — production library build
 npm run build:dev      # development build
-npm run watch          # clean:build then watch:lib (rebuilds on save)
+npm start              # build:dev of the lib + ng serve demo (http://localhost:4200)
+npm run watch          # clean:build then watch:lib + watch:demo (rebuilds on save)
 npm run watch:lib      # ng build --configuration development --watch (no clean first)
 npm run lint           # ng lint (whole workspace)
 npm run lint:lib-fix   # ng lint @talentia/fullcalendar --fix
 npm run madge:lib      # circular-dependency check over the lib's TS sources
+npm run demo:dev       # / demo:prod — build the demo app
 ```
 
 There is **no test framework** in this repo (no Jest/Karma/e2e config wired up) and no `test`
 architect target in `angular.json`. Verification of behavior is manual — see the "Manual
-verification" pattern below.
+verification" pattern below. The demo (`npm start`) is the quickest place to check it: it
+deliberately shows in its template values updated from `(datesRender)`, so a regression of the
+NG0100 fix described below shows up there as a console error.
 
 When iterating on the library while it's consumed elsewhere (e.g. the HCM app), keep
 `npm run watch:lib` running and use `npm link` (see `CONTRIBUTORS.md`) to point the consumer at
@@ -59,6 +63,14 @@ Everything lives in `projects/fullcalendar/src/lib/`:
     in-place mutations of these. Confirmed changes accumulate in `dirtyProps` and are flushed to
     `calendar.mutateOptions(...)` in `ngAfterContentChecked` (not `ngOnChanges`), which runs after
     both `ngDoCheck` and `ngOnChanges` in the same cycle.
+  - `render()` (`ngAfterViewInit`), `mutateOptions()` (`ngAfterContentChecked`) and `destroy()`
+    (`ngOnDestroy`) therefore run *during* Angular change detection, and FullCalendar fires its
+    callbacks synchronously from them. The notification-only outputs in `NOTIFICATION_OUTPUTS`
+    (`datesRender`, `datesDestroy`, `viewSkeletonRender`, `viewSkeletonDestroy`, `loading`) are
+    emitted in a microtask when that happens (`runFromLifecycleHook` sets the flag), otherwise a
+    consumer updating its own template from them gets NG0100 in dev and a stale view in prod.
+    Render callbacks such as `eventRender`/`dayRender`/`resourceRender` stay synchronous on
+    purpose (handlers mutate the just-created element before FullCalendar measures the layout).
   - `@Input()`/`@Output()` names are meant to mirror the FullCalendar v4 options/callbacks
     one-for-one (see the `TODO` comment in the component: ideally regenerated per core version
     bump, currently maintained by hand).
